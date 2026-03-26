@@ -48,25 +48,25 @@ SEARCHES = [
         "category": "Compliance Testing",
         "fit": "best",
         "label": "Compliance Testing Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=compliance+testing+analyst&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Compliance Testing",
         "fit": "best",
         "label": "Compliance Testing Analyst — Remote",
-        "url": "https://www.indeed.com/rss?q=compliance+testing+analyst&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing+analyst&f_WT=2&f_TPR=r86400&format=rss",
     },
     {
         "category": "Compliance Testing",
         "fit": "best",
         "label": "Compliance Testing — Des Moines",
-        "url": "https://www.indeed.com/rss?q=compliance+testing&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Compliance Testing",
         "fit": "best",
         "label": "Compliance Testing — Remote",
-        "url": "https://www.indeed.com/rss?q=compliance+testing&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing&f_WT=2&f_TPR=r86400&format=rss",
     },
 
     # ════════════════════════════════════════════════════════════
@@ -76,25 +76,25 @@ SEARCHES = [
         "category": "Internal Audit",
         "fit": "strong",
         "label": "Internal Auditor — Des Moines",
-        "url": "https://www.indeed.com/rss?q=internal+auditor&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=internal+auditor&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Internal Audit",
         "fit": "strong",
         "label": "Internal Auditor — Remote",
-        "url": "https://www.indeed.com/rss?q=internal+auditor&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=internal+auditor&f_WT=2&f_TPR=r86400&format=rss",
     },
     {
         "category": "Internal Audit",
         "fit": "strong",
         "label": "Audit Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=audit+analyst+financial&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=audit+analyst+financial&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Internal Audit",
         "fit": "strong",
         "label": "Audit Analyst — Remote",
-        "url": "https://www.indeed.com/rss?q=audit+analyst+financial&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=audit+analyst+financial&f_WT=2&f_TPR=r86400&format=rss",
     },
 
     # ════════════════════════════════════════════════════════════
@@ -104,19 +104,19 @@ SEARCHES = [
         "category": "Controls Testing",
         "fit": "strong",
         "label": "Controls Testing Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=controls+testing+analyst&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=controls+testing+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Controls Testing",
         "fit": "strong",
         "label": "Controls Testing Analyst — Remote",
-        "url": "https://www.indeed.com/rss?q=controls+testing+analyst&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=controls+testing+analyst&f_WT=2&f_TPR=r86400&format=rss",
     },
     {
         "category": "Controls Testing",
         "fit": "strong",
         "label": "SOX Controls Testing — Remote",
-        "url": "https://www.indeed.com/rss?q=SOX+controls+testing&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=SOX+controls+testing&f_WT=2&f_TPR=r86400&format=rss",
     },
 
     # ════════════════════════════════════════════════════════════
@@ -126,25 +126,25 @@ SEARCHES = [
         "category": "Compliance Monitoring",
         "fit": "strong",
         "label": "Compliance Monitoring Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=compliance+monitoring+analyst&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+monitoring+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Compliance Monitoring",
         "fit": "strong",
         "label": "Compliance Monitoring Analyst — Remote",
-        "url": "https://www.indeed.com/rss?q=compliance+monitoring+analyst&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+monitoring+analyst&f_WT=2&f_TPR=r86400&format=rss",
     },
     {
         "category": "Compliance Monitoring",
         "fit": "strong",
         "label": "Compliance Coordinator — Des Moines",
-        "url": "https://www.indeed.com/rss?q=compliance+coordinator&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+coordinator&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Compliance Monitoring",
         "fit": "strong",
         "label": "Compliance Coordinator — Remote",
-        "url": "https://www.indeed.com/rss?q=compliance+coordinator&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+coordinator&f_WT=2&f_TPR=r86400&format=rss",
     },
 
     # ════════════════════════════════════════════════════════════
@@ -154,31 +154,31 @@ SEARCHES = [
         "category": "QA Specialist",
         "fit": "good",
         "label": "QA Specialist — Des Moines",
-        "url": "https://www.indeed.com/rss?q=QA+specialist&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+specialist&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "QA Specialist",
         "fit": "good",
         "label": "QA Specialist — Remote",
-        "url": "https://www.indeed.com/rss?q=QA+specialist&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+specialist&f_WT=2&f_TPR=r86400&format=rss",
     },
     {
         "category": "QA Specialist",
         "fit": "good",
         "label": "QA Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=QA+analyst&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "QA Specialist",
         "fit": "good",
         "label": "QA Analyst — Remote",
-        "url": "https://www.indeed.com/rss?q=QA+analyst&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+analyst&f_WT=2&f_TPR=r86400&format=rss",
     },
     {
         "category": "QA Specialist",
         "fit": "good",
         "label": "Process Improvement Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=process+improvement+analyst&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=process+improvement+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
 
     # ════════════════════════════════════════════════════════════
@@ -188,25 +188,25 @@ SEARCHES = [
         "category": "Reporting Analyst",
         "fit": "good",
         "label": "Reporting Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=reporting+analyst&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=reporting+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Reporting Analyst",
         "fit": "good",
         "label": "Reporting Analyst — Remote",
-        "url": "https://www.indeed.com/rss?q=reporting+analyst&l=remote",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=reporting+analyst&f_WT=2&f_TPR=r86400&format=rss",
     },
     {
         "category": "Reporting Analyst",
         "fit": "good",
         "label": "Business Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=business+analyst+financial+services&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=business+analyst+financial+services&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
     {
         "category": "Reporting Analyst",
         "fit": "good",
         "label": "Operations Support Analyst — Des Moines",
-        "url": "https://www.indeed.com/rss?q=operations+support+analyst&l=Des+Moines%2C+IA",
+        "url": "https://www.linkedin.com/jobs/search/?keywords=operations+support+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
     },
 ]
 
@@ -363,7 +363,7 @@ def build_html(all_results, total_new):
     {sections}
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">
     <p style="font-size:11px;color:#94a3b8;text-align:center;margin:0;">
-      Sent by your GitHub Actions job alert &nbsp;&middot;&nbsp; Runs every 2 hours, 6am&ndash;6pm CT
+      Sent by your GitHub Actions job alert &nbsp;&middot;&nbsp; Sourced from LinkedIn &nbsp;&middot;&nbsp; Runs every 2 hours, 6am&ndash;6pm CT
     </p>
   </div>
 
