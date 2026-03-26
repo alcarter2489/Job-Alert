@@ -1,8 +1,9 @@
 """
 job_alert.py
-Monitors Indeed RSS feeds for roles matched to Amber's background.
+Monitors job postings for roles matched to Amber's background.
+Uses Google Custom Search API to search across multiple job boards.
 Emails only NEW listings with fit-tier badges (Best / Strong / Good).
-Runs every 2 hours, 6am–6pm CT via GitHub Actions.
+Runs every 2 hours, 6am-6pm CT via GitHub Actions.
 """
 
 import os
@@ -14,22 +15,13 @@ import signal
 import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from bs4 import BeautifulSoup
-
-# ── Timeout config ─────────────────────────────────────────────────────────────
-REQUEST_TIMEOUT   = 10       # seconds per individual HTTP request
-MAX_TOTAL_SECONDS = 300      # 5 minute hard cap on the entire run
-
-def _timeout_handler(signum, frame):
-    raise TimeoutError("Total run time exceeded 5 minutes — exiting cleanly.")
-
-signal.signal(signal.SIGALRM, _timeout_handler)
-signal.alarm(MAX_TOTAL_SECONDS)
 
 # ── Config (GitHub Actions secrets) ───────────────────────────────────────────
 EMAIL_SENDER   = os.environ["EMAIL_SENDER"]
 EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
 EMAIL_TO       = os.environ["EMAIL_TO"]
+GOOGLE_API_KEY = os.environ["GOOGLE_API_KEY"]
+GOOGLE_CSE_ID  = os.environ["GOOGLE_CSE_ID"]
 
 SEEN_FILE = "seen_jobs.json"
 
@@ -37,176 +29,125 @@ NOW   = datetime.datetime.now()
 TODAY = NOW.strftime("%B %d, %Y")
 TIME  = NOW.strftime("%I:%M %p")
 
+# ── Timeout config ─────────────────────────────────────────────────────────────
+REQUEST_TIMEOUT   = 10
+MAX_TOTAL_SECONDS = 300
+
+def _timeout_handler(signum, frame):
+    raise TimeoutError("Total run time exceeded 5 minutes — exiting cleanly.")
+
+signal.signal(signal.SIGALRM, _timeout_handler)
+signal.alarm(MAX_TOTAL_SECONDS)
+
 # ── Search Targets ─────────────────────────────────────────────────────────────
-# fit: "best" | "strong" | "good"
 SEARCHES = [
 
-    # ════════════════════════════════════════════════════════════
-    #  BEST FIT — Compliance Testing Analyst
-    # ════════════════════════════════════════════════════════════
+    # BEST FIT — Compliance Testing Analyst
     {
         "category": "Compliance Testing",
         "fit": "best",
         "label": "Compliance Testing Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
+        "query": '"compliance testing analyst" "Des Moines"',
     },
     {
         "category": "Compliance Testing",
         "fit": "best",
         "label": "Compliance Testing Analyst — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing+analyst&f_WT=2&f_TPR=r86400&format=rss",
+        "query": '"compliance testing analyst" remote',
     },
     {
         "category": "Compliance Testing",
         "fit": "best",
-        "label": "Compliance Testing — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "Compliance Testing",
-        "fit": "best",
-        "label": "Compliance Testing — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+testing&f_WT=2&f_TPR=r86400&format=rss",
+        "label": "Compliance Testing — Financial Services",
+        "query": '"compliance testing" "financial services" (remote OR "Des Moines")',
     },
 
-    # ════════════════════════════════════════════════════════════
-    #  STRONG FIT — Internal Auditor
-    # ════════════════════════════════════════════════════════════
+    # STRONG FIT — Internal Auditor
     {
         "category": "Internal Audit",
         "fit": "strong",
         "label": "Internal Auditor — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=internal+auditor&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
+        "query": '"internal auditor" "Des Moines"',
     },
     {
         "category": "Internal Audit",
         "fit": "strong",
         "label": "Internal Auditor — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=internal+auditor&f_WT=2&f_TPR=r86400&format=rss",
+        "query": '"internal auditor" remote "financial services"',
     },
     {
         "category": "Internal Audit",
         "fit": "strong",
-        "label": "Audit Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=audit+analyst+financial&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "Internal Audit",
-        "fit": "strong",
-        "label": "Audit Analyst — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=audit+analyst+financial&f_WT=2&f_TPR=r86400&format=rss",
+        "label": "Audit Analyst — Des Moines or Remote",
+        "query": '"audit analyst" (remote OR "Des Moines") "financial"',
     },
 
-    # ════════════════════════════════════════════════════════════
-    #  STRONG FIT — Controls Testing Analyst
-    # ════════════════════════════════════════════════════════════
+    # STRONG FIT — Controls Testing
     {
         "category": "Controls Testing",
         "fit": "strong",
-        "label": "Controls Testing Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=controls+testing+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "Controls Testing",
-        "fit": "strong",
-        "label": "Controls Testing Analyst — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=controls+testing+analyst&f_WT=2&f_TPR=r86400&format=rss",
+        "label": "Controls Testing Analyst — Des Moines or Remote",
+        "query": '"controls testing" analyst (remote OR "Des Moines")',
     },
     {
         "category": "Controls Testing",
         "fit": "strong",
         "label": "SOX Controls Testing — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=SOX+controls+testing&f_WT=2&f_TPR=r86400&format=rss",
+        "query": 'SOX "controls testing" remote',
     },
 
-    # ════════════════════════════════════════════════════════════
-    #  STRONG FIT — Compliance Monitoring
-    # ════════════════════════════════════════════════════════════
+    # STRONG FIT — Compliance Monitoring
     {
         "category": "Compliance Monitoring",
         "fit": "strong",
-        "label": "Compliance Monitoring Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+monitoring+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
+        "label": "Compliance Monitoring Analyst — Des Moines or Remote",
+        "query": '"compliance monitoring" analyst (remote OR "Des Moines")',
     },
     {
         "category": "Compliance Monitoring",
         "fit": "strong",
-        "label": "Compliance Monitoring Analyst — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+monitoring+analyst&f_WT=2&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "Compliance Monitoring",
-        "fit": "strong",
-        "label": "Compliance Coordinator — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+coordinator&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "Compliance Monitoring",
-        "fit": "strong",
-        "label": "Compliance Coordinator — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=compliance+coordinator&f_WT=2&f_TPR=r86400&format=rss",
+        "label": "Compliance Coordinator — Des Moines or Remote",
+        "query": '"compliance coordinator" (remote OR "Des Moines") "financial"',
     },
 
-    # ════════════════════════════════════════════════════════════
-    #  GOOD FIT — QA Specialist
-    # ════════════════════════════════════════════════════════════
+    # GOOD FIT — QA Specialist
     {
         "category": "QA Specialist",
         "fit": "good",
         "label": "QA Specialist — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+specialist&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
+        "query": '"QA specialist" OR "quality assurance specialist" "Des Moines"',
     },
     {
         "category": "QA Specialist",
         "fit": "good",
-        "label": "QA Specialist — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+specialist&f_WT=2&f_TPR=r86400&format=rss",
+        "label": "QA Analyst — Remote Financial Services",
+        "query": '"QA analyst" OR "quality assurance analyst" remote "financial"',
     },
     {
         "category": "QA Specialist",
         "fit": "good",
-        "label": "QA Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "QA Specialist",
-        "fit": "good",
-        "label": "QA Analyst — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=QA+analyst&f_WT=2&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "QA Specialist",
-        "fit": "good",
-        "label": "Process Improvement Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=process+improvement+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
+        "label": "Process Improvement Analyst — Des Moines or Remote",
+        "query": '"process improvement analyst" (remote OR "Des Moines")',
     },
 
-    # ════════════════════════════════════════════════════════════
-    #  GOOD FIT — Reporting Analyst
-    # ════════════════════════════════════════════════════════════
+    # GOOD FIT — Reporting Analyst
     {
         "category": "Reporting Analyst",
         "fit": "good",
         "label": "Reporting Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=reporting+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
+        "query": '"reporting analyst" "Des Moines"',
     },
     {
         "category": "Reporting Analyst",
         "fit": "good",
-        "label": "Reporting Analyst — Remote",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=reporting+analyst&f_WT=2&f_TPR=r86400&format=rss",
+        "label": "Reporting Analyst — Remote Financial",
+        "query": '"reporting analyst" remote "financial services" OR banking OR insurance',
     },
     {
         "category": "Reporting Analyst",
         "fit": "good",
-        "label": "Business Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=business+analyst+financial+services&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
-    },
-    {
-        "category": "Reporting Analyst",
-        "fit": "good",
-        "label": "Operations Support Analyst — Des Moines",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=operations+support+analyst&location=Des+Moines%2C+Iowa&f_TPR=r86400&format=rss",
+        "label": "Operations Support Analyst — Des Moines or Remote",
+        "query": '"operations support analyst" OR "business analyst" (remote OR "Des Moines") "financial"',
     },
 ]
 
@@ -241,39 +182,60 @@ def save_seen(seen):
 def job_id(link):
     return hashlib.md5(link.encode()).hexdigest()
 
-# ── RSS Fetching ───────────────────────────────────────────────────────────────
+# ── Google Custom Search ───────────────────────────────────────────────────────
 
 def fetch_jobs(search, seen):
-    headers = {"User-Agent": "Mozilla/5.0 (job-alert-bot/1.0)"}
+    params = {
+        "key": GOOGLE_API_KEY,
+        "cx":  GOOGLE_CSE_ID,
+        "q":   search["query"],
+        "num": 10,
+        "dateRestrict": "d1",
+    }
     try:
-        resp = requests.get(search["url"], headers=headers, timeout=REQUEST_TIMEOUT)
+        resp = requests.get(
+            "https://www.googleapis.com/customsearch/v1",
+            params=params,
+            timeout=REQUEST_TIMEOUT
+        )
         resp.raise_for_status()
+        data = resp.json()
     except Exception as e:
         print(f"  WARNING: Could not fetch {search['label']}: {e}")
         return [], set()
 
-    soup = BeautifulSoup(resp.content, "xml")
     new_jobs = []
     new_ids  = set()
 
-    for item in soup.find_all("item")[:10]:
-        link = item.find("link").get_text(strip=True) if item.find("link") else ""
+    for item in data.get("items", []):
+        link = item.get("link", "")
         jid  = job_id(link)
         if not link or jid in seen:
             continue
 
-        title    = item.find("title").get_text(strip=True) if item.find("title") else "No title"
-        company, location = "", ""
-        desc_tag = item.find("description")
-        if desc_tag:
-            desc_soup = BeautifulSoup(desc_tag.get_text(), "html.parser")
-            text = desc_soup.get_text(" ", strip=True)
-            if " - " in text:
-                parts    = text.split(" - ")
-                company  = parts[1].strip() if len(parts) > 1 else ""
-                location = parts[2].strip() if len(parts) > 2 else ""
+        title   = item.get("title", "No title")
+        snippet = item.get("snippet", "")
 
-        new_jobs.append({"title": title, "link": link, "company": company, "location": location})
+        pagemap  = item.get("pagemap", {})
+        metatags = pagemap.get("metatags", [{}])[0]
+        company  = (
+            metatags.get("og:site_name") or
+            metatags.get("twitter:site") or ""
+        )
+
+        for suffix in [" - Indeed", " | Indeed", " - LinkedIn", " | LinkedIn",
+                       " - ZipRecruiter", " | ZipRecruiter", " - Glassdoor",
+                       " | Glassdoor", " - Workday", " | Workday"]:
+            if title.endswith(suffix):
+                title = title[:-len(suffix)].strip()
+                break
+
+        new_jobs.append({
+            "title":   title,
+            "link":    link,
+            "company": company,
+            "snippet": snippet[:120] + "..." if len(snippet) > 120 else snippet,
+        })
         new_ids.add(jid)
 
     return new_jobs, new_ids
@@ -300,20 +262,24 @@ def build_html(all_results, total_new):
         for label, jobs in searches:
             for job in jobs:
                 found = True
-                loc_part = f"&nbsp;&nbsp;&middot;&nbsp;&nbsp;{job['location']}" if job["location"] else ""
+                company_html = (
+                    f"<div style='color:#475569;font-size:13px;margin-top:2px;"
+                    f"font-weight:500;'>{job['company']}</div>"
+                    if job["company"] else ""
+                )
                 cards += f"""
                 <div style="border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;
                             margin-bottom:10px;background:#ffffff;">
                   <a href="{job['link']}" style="color:#1a3a5c;font-weight:600;font-size:15px;
                      text-decoration:none;line-height:1.4;">{job['title']}</a>
-                  <div style="color:#64748b;font-size:13px;margin-top:3px;">
-                    {job['company']}{loc_part}
+                  {company_html}
+                  <div style="color:#64748b;font-size:12px;margin-top:4px;line-height:1.5;">
+                    {job['snippet']}
                   </div>
                   <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span style="background:{cfg['bg']};color:{cfg['color']};border:1px solid {cfg['border']};
-                                 font-size:11px;font-weight:600;padding:2px 9px;border-radius:12px;">
-                      {cfg['label']}
-                    </span>
+                    <span style="background:{cfg['bg']};color:{cfg['color']};
+                                 border:1px solid {cfg['border']};font-size:11px;font-weight:600;
+                                 padding:2px 9px;border-radius:12px;">{cfg['label']}</span>
                     <span style="color:#94a3b8;font-size:11px;">{label}</span>
                   </div>
                 </div>"""
@@ -330,23 +296,21 @@ def build_html(all_results, total_new):
             <span style="opacity:.8;font-weight:400;font-size:11px;">{cfg['label']}</span>
           </div>
           <div style="border:1px solid #e2e8f0;border-top:none;
-                      border-radius:0 0 8px 8px;padding:14px;">
-            {cards}
-          </div>
+                      border-radius:0 0 8px 8px;padding:14px;">{cards}</div>
         </div>"""
 
     if not sections:
-        sections = '<p style="color:#94a3b8;text-align:center;font-size:13px;">No new listings this run.</p>'
+        sections = '<p style="color:#94a3b8;text-align:center;font-size:13px;">No new listings found this run.</p>'
 
     return f"""<!DOCTYPE html>
 <html><body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
 <div style="max-width:640px;margin:30px auto;">
-
   <div style="background:#1a3a5c;color:#fff;padding:22px 28px;
               border-radius:10px 10px 0 0;text-align:center;">
     <div style="font-size:22px;font-weight:700;">Job Alert</div>
     <div style="font-size:13px;opacity:.75;margin-top:4px;">
-      {TODAY} &nbsp;&middot;&nbsp; {TIME} &nbsp;&middot;&nbsp; {total_new} new listing{"s" if total_new != 1 else ""}
+      {TODAY} &nbsp;&middot;&nbsp; {TIME} &nbsp;&middot;&nbsp;
+      {total_new} new listing{"s" if total_new != 1 else ""}
     </div>
     <div style="margin-top:12px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
       <span style="background:#dcfce7;color:#166534;border:1px solid #86efac;
@@ -357,16 +321,16 @@ def build_html(all_results, total_new):
                    font-size:11px;font-weight:600;padding:2px 10px;border-radius:12px;">● Good fit</span>
     </div>
   </div>
-
   <div style="background:#f8fafc;padding:24px 28px;border:1px solid #e2e8f0;
               border-top:none;border-radius:0 0 10px 10px;">
     {sections}
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">
     <p style="font-size:11px;color:#94a3b8;text-align:center;margin:0;">
-      Sent by your GitHub Actions job alert &nbsp;&middot;&nbsp; Sourced from LinkedIn &nbsp;&middot;&nbsp; Runs every 2 hours, 6am&ndash;6pm CT
+      Sent by your GitHub Actions job alert &nbsp;&middot;&nbsp;
+      Powered by Google Custom Search &nbsp;&middot;&nbsp;
+      Runs every 2 hours, 6am&ndash;6pm CT
     </p>
   </div>
-
 </div>
 </body></html>"""
 
@@ -378,7 +342,6 @@ def send_email(html, total_new):
     msg["From"]    = EMAIL_SENDER
     msg["To"]      = EMAIL_TO
     msg.attach(MIMEText(html, "html"))
-
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
         server.sendmail(EMAIL_SENDER, EMAIL_TO, msg.as_string())
@@ -403,6 +366,7 @@ def main():
 
     if total_new == 0:
         print("No new listings this run — no email sent.")
+        save_seen(seen | all_new_ids)
         return
 
     html = build_html(all_results, total_new)
