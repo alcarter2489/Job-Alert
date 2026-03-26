@@ -1,0 +1,53 @@
+name: Job Alert
+
+on:
+  schedule:
+    # Runs every 2 hours between 6am and 6pm Central Time (UTC-5)
+    - cron: "0 11 * * *"   #  6:00am CT
+    - cron: "0 13 * * *"   #  8:00am CT
+    - cron: "0 15 * * *"   # 10:00am CT
+    - cron: "0 17 * * *"   # 12:00pm CT
+    - cron: "0 19 * * *"   #  2:00pm CT
+    - cron: "0 21 * * *"   #  4:00pm CT
+    - cron: "0 23 * * *"   #  6:00pm CT
+  workflow_dispatch:        # lets you trigger manually from GitHub
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  run-alert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Restore seen jobs cache
+        uses: actions/cache@v4
+        with:
+          path: seen_jobs.json
+          key: seen-jobs-${{ github.run_id }}
+          restore-keys: seen-jobs-
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Run job alert
+        env:
+          EMAIL_SENDER:   ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:       ${{ secrets.EMAIL_TO }}
+        run: python job_alert.py
+
+      - name: Save updated seen jobs
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: seen_jobs.json
+          key: seen-jobs-${{ github.run_id }}
