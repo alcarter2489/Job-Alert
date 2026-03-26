@@ -10,10 +10,21 @@ import json
 import smtplib
 import datetime
 import hashlib
+import signal
 import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from bs4 import BeautifulSoup
+
+# ── Timeout config ─────────────────────────────────────────────────────────────
+REQUEST_TIMEOUT   = 10       # seconds per individual HTTP request
+MAX_TOTAL_SECONDS = 300      # 5 minute hard cap on the entire run
+
+def _timeout_handler(signum, frame):
+    raise TimeoutError("Total run time exceeded 5 minutes — exiting cleanly.")
+
+signal.signal(signal.SIGALRM, _timeout_handler)
+signal.alarm(MAX_TOTAL_SECONDS)
 
 # ── Config (GitHub Actions secrets) ───────────────────────────────────────────
 EMAIL_SENDER   = os.environ["EMAIL_SENDER"]
@@ -235,7 +246,7 @@ def job_id(link):
 def fetch_jobs(search, seen):
     headers = {"User-Agent": "Mozilla/5.0 (job-alert-bot/1.0)"}
     try:
-        resp = requests.get(search["url"], headers=headers, timeout=15)
+        resp = requests.get(search["url"], headers=headers, timeout=REQUEST_TIMEOUT)
         resp.raise_for_status()
     except Exception as e:
         print(f"  WARNING: Could not fetch {search['label']}: {e}")
@@ -399,4 +410,7 @@ def main():
     save_seen(seen | all_new_ids)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except TimeoutError as e:
+        print(f"WARNING: {e}")
